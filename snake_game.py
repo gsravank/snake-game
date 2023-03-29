@@ -12,7 +12,9 @@ class Direction(Enum):
 Point = namedtuple('Point', 'x, y')
 
 BLOCK_SIZE = 20
-SPEED = 20
+SPEED = 15
+MIN_SPEED = SPEED
+MAX_SPEED = 2 * SPEED
 
 # RGB Colors
 WHITE = (255, 255, 255)
@@ -40,6 +42,7 @@ class SnakeGame:
         self.head = Point(self.w/2, self.h/2) # start in the middle of the display
         self.snake = deque([self.head, Point(self.head.x - BLOCK_SIZE, self.head.y),
                       Point(self.head.x - (2*BLOCK_SIZE), self.head.y)])
+        self.starting_length = len(self.snake)
         self.block_map = defaultdict(lambda : False)
         for pt in self.snake:
             self.block_map[pt] = True
@@ -59,8 +62,37 @@ class SnakeGame:
         return
 
 
+    def _get_curr_direction(self):
+        first = self.snake[0]
+        self.snake.append(self.snake.popleft())
+        second = self.snake[0]
+        self.snake.appendleft(self.snake.pop())
+
+        if second.y == first.y:
+            if first.x < second.x:
+                return Direction.LEFT
+            else:
+                return Direction.RIGHT
+        else:
+            if first.y < second.y:
+                return Direction.UP
+            else:
+                return Direction.DOWN
+
+    def _are_opposites(self, d1, d2):
+        if d1 == Direction.LEFT:
+            return d2 == Direction.RIGHT
+        elif d1 == Direction.RIGHT:
+            return d2 == Direction.LEFT
+        elif d1 == Direction.UP:
+            return d2 == Direction.DOWN
+        else:
+            return d2 == Direction.UP
+
     def play_step(self):
         # Collect user input
+        prev_direction = self.direction
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -76,6 +108,9 @@ class SnakeGame:
                     self.direction = Direction.DOWN
 
         # Move snake
+        if self._are_opposites(self._get_curr_direction(), self.direction):
+            self.direction = prev_direction
+
         self._move(self.direction)
         self.snake.appendleft(self.head)
 
@@ -98,11 +133,23 @@ class SnakeGame:
 
         # Update UI and clock
         self._update_ui()
-        self.clock.tick(SPEED)
+        self.clock.tick(self._get_curr_speed())
 
         # Return game over and score
 
         return game_over, self.score
+
+    def _get_curr_speed(self):
+        return SPEED
+        curr_len = len(self.snake)
+        init_len = self.starting_length
+        inc_len = curr_len - init_len
+
+        inc_speed = inc_len // 2
+
+        new_speed = MIN_SPEED + inc_speed
+
+        return min(MAX_SPEED, max(MIN_SPEED, new_speed))
 
     def _is_collision(self):
         # Hits boundary
@@ -136,7 +183,7 @@ class SnakeGame:
 
         for pt in self.snake:
             pygame.draw.rect(self.display, BLUE1, pygame.Rect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE))
-            pygame.draw.rect(self.display, BLUE2, pygame.Rect(pt.x + 4, pt.y + 4, 0.6 * BLOCK_SIZE, 0.6 * BLOCK_SIZE))
+            pygame.draw.rect(self.display, BLUE2, pygame.Rect(pt.x + (0.2 * BLOCK_SIZE), pt.y + (0.2 * BLOCK_SIZE), 0.6 * BLOCK_SIZE, 0.6 * BLOCK_SIZE))
 
         pygame.draw.rect(self.display, RED, pygame.Rect(self.food.x, self.food.y, BLOCK_SIZE, BLOCK_SIZE))
 
