@@ -1,7 +1,7 @@
 import pygame
 import random
 from enum import Enum
-from collections import namedtuple
+from collections import namedtuple, deque, defaultdict
 
 class Direction(Enum):
     RIGHT = 1
@@ -38,8 +38,12 @@ class SnakeGame:
         # Init game state
         self.direction = Direction.RIGHT
         self.head = Point(self.w/2, self.h/2) # start in the middle of the display
-        self.snake = [self.head, Point(self.head.x - BLOCK_SIZE, self.head.y),
-                      Point(self.head.x - (2*BLOCK_SIZE), self.head.y)]
+        self.snake = deque([self.head, Point(self.head.x - BLOCK_SIZE, self.head.y),
+                      Point(self.head.x - (2*BLOCK_SIZE), self.head.y)])
+        self.block_map = defaultdict(lambda : False)
+        for pt in self.snake:
+            self.block_map[pt] = True
+
         self.score = 0
         self.food = None
         self._place_food()
@@ -73,7 +77,7 @@ class SnakeGame:
 
         # Move snake
         self._move(self.direction)
-        self.snake.insert(0, self.head)
+        self.snake.appendleft(self.head)
 
         # Check if game over
         # and quit if so
@@ -81,13 +85,16 @@ class SnakeGame:
         if self._is_collision():
             game_over = True
             return game_over, self.score
+        else:
+            self.block_map[self.head] = True
 
         # Place new food or just move
         if self.head == self.food:
             self.score += 1
             self._place_food()
         else:
-            self.snake.pop()
+            tail = self.snake.pop()
+            self.block_map[tail] = False
 
         # Update UI and clock
         self._update_ui()
@@ -103,7 +110,7 @@ class SnakeGame:
             return  True
 
         # Hits itself
-        if self.head in self.snake[1:]:
+        if self.block_map[self.head]:# in self.snake[1:]:
             return True
 
         return False
