@@ -2,6 +2,7 @@ import pygame
 import random
 from enum import Enum
 from collections import namedtuple, deque, defaultdict
+from optparse import OptionParser
 
 class Direction(Enum):
     RIGHT = 1
@@ -28,9 +29,10 @@ font = pygame.font.Font('arial.ttf', 25)
 # font = pygame.fond.SysFont('arial', 25)
 
 class SnakeGame:
-    def __init__(self, w=640, h=480):
+    def __init__(self, w=640, h=480, speed=SPEED):
         self.w = w
         self.h = h
+        self.speed = speed
 
         # Init display
         self.display = pygame.display.set_mode((self.w, self.h))
@@ -140,14 +142,14 @@ class SnakeGame:
         return game_over, self.score
 
     def _get_curr_speed(self):
-        return SPEED
+        return self.speed
         curr_len = len(self.snake)
         init_len = self.starting_length
         inc_len = curr_len - init_len
 
         inc_speed = inc_len // 2
 
-        new_speed = MIN_SPEED + inc_speed
+        new_speed = self.speed + inc_speed
 
         return min(MAX_SPEED, max(MIN_SPEED, new_speed))
 
@@ -194,8 +196,20 @@ class SnakeGame:
         return
 
 
+def ParseCommandlineArgs():
+    parser = OptionParser()
+    parser.add_option("-w", "--width", dest="width", default=640, type=int)
+    parser.add_option("-l", "--length", dest="length", default=480, type=int)
+    parser.add_option("-s", "--speed", dest="speed", default=SPEED, type=int)
+    options, _ = parser.parse_args()
+
+    return options
+
+
 if __name__ == "__main__":
-    game = SnakeGame()
+    options = ParseCommandlineArgs()
+
+    game = SnakeGame(options.width, options.length, options.speed)
 
     # game loop
     while True:
