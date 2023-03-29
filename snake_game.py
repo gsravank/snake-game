@@ -46,7 +46,20 @@ class SnakeGame:
 
 
     def play_step(self):
-        pass
+        # Collect user input
+
+        # Move snake
+
+        # Check if game over
+        # and quit if so
+
+        # Place new food or just move
+
+        # Update UI and clock
+
+        # Return gamve over and score
+        game_over = False
+        return game_over, self.score
 
 
 
@@ -55,8 +68,12 @@ if __name__ == "__main__":
 
     # game loop
     while True:
-        game.play_step()
+        game_over, score = game.play_step()
 
         # break if game is over
+        if game_over:
+            break
+
+        print(f"Game over!\nFinal score: {score}")
 
     pygame.quit()
